@@ -19,8 +19,6 @@
       --accent-hover: #2563eb;
       --accent-soft: rgba(59, 130, 246, 0.16);
       --success: #10b981;
-      --warning: #f59e0b;
-      --danger: #ef4444;
       --radius: 14px;
     }
 
@@ -532,7 +530,7 @@
         <div class="brand-icon">Fe</div>
         <div>
           <h1>철강 자재 통합 중량 계산기</h1>
-          <p>각형강관(KS D 3568) · C형강/채널 · H형강(KS D 3502) · 철판/평철</p>
+          <p>각형강관(KS D 3568) · C형강/채널 · 원형강관(STK/SPP) · 철판/평철</p>
         </div>
       </div>
       <div class="density-badge">
@@ -550,9 +548,9 @@
         <span>C형강 · 채널</span>
         <span class="sub">KS D 3530 / 3502</span>
       </button>
-      <button class="tab-btn" data-tab="hbeam" onclick="switchTab('hbeam')">
-        <span>H형강 (H빔)</span>
-        <span class="sub">KS D 3502</span>
+      <button class="tab-btn" data-tab="round" onclick="switchTab('round')">
+        <span>원형 탄소강관</span>
+        <span class="sub">STK(구조) / SPP(배관)</span>
       </button>
       <button class="tab-btn" data-tab="plate" onclick="switchTab('plate')">
         <span>철판 · 평철</span>
@@ -561,12 +559,10 @@
     </nav>
 
     <div class="main-grid">
-      <!-- 좌측 입력 영역 -->
       <div>
         <div class="card" id="inputCard"></div>
       </div>
 
-      <!-- 우측 결과 및 단면도 영역 -->
       <div>
         <div class="card">
           <h2 class="card-title">
@@ -595,7 +591,6 @@
       </div>
     </div>
 
-    <!-- 통합 물량 산출표 (BOM) -->
     <div class="card">
       <div class="card-title">
         <span>통합 물량 산출표 (BOM)</span>
@@ -613,7 +608,7 @@
               <th>구분</th>
               <th>규격</th>
               <th class="num">단위중량</th>
-              <th class="num">길이/매수</th>
+              <th class="num">길이/치수</th>
               <th class="num">수량</th>
               <th class="num">총 중량</th>
               <th class="num">예상 금액</th>
@@ -641,9 +636,10 @@
   <div class="toast" id="toast"></div>
 
   <script>
-    const DENSITY = 7.85; // g/cm3 == kg / (1000 cm3)
+    const DENSITY = 7.85;
     let currentTab = 'tube';
-    let channelMode = 'c'; // 'c' = 경량 C형강, 'u' = 일반 ㄷ형강(채널)
+    let channelMode = 'c';
+    let roundMode = 'stk'; // 'stk' = 일반구조용 탄소강관(KS D 3566), 'spp' = 일반배관용 탄소강관(KS D 3507)
     let bomList = [];
 
     const state = {
@@ -652,7 +648,10 @@
         c: { h: 100, b: 50, cLip: 20, t: 2.3, length: 6, qty: 1, pricePerKg: 0 },
         u: { h: 100, b: 50, t1: 5.0, t2: 7.5, r: 8.0, length: 6, qty: 1, pricePerKg: 0 }
       },
-      hbeam: { h: 200, b: 100, t1: 5.5, t2: 8.0, r: 8.0, length: 6, qty: 1, pricePerKg: 0 },
+      round: {
+        stk: { od: 60.5, t: 3.2, length: 6, qty: 1, pricePerKg: 0 },
+        spp: { nominal: '50A (2B)', od: 60.5, t: 3.8, length: 6, qty: 1, pricePerKg: 0 }
+      },
       plate: { width: 1219, height: 2438, t: 6.0, qty: 1, pricePerKg: 0 }
     };
 
@@ -676,11 +675,19 @@
         { label: 'ㄷ-125×65×6×8T', h: 125, b: 65, t1: 6.0, t2: 8.0, r: 9.0 },
         { label: 'ㄷ-150×75×6.5×9T', h: 150, b: 75, t1: 6.5, t2: 9.0, r: 10.0 }
       ],
-      hbeam: [
-        { label: 'H-150×75×5×7', h: 150, b: 75, t1: 5.0, t2: 7.0, r: 8.0 },
-        { label: 'H-200×100×5.5×8', h: 200, b: 100, t1: 5.5, t2: 8.0, r: 8.0 },
-        { label: 'H-250×125×6×9', h: 250, b: 125, t1: 6.0, t2: 9.0, r: 10.0 },
-        { label: 'H-300×150×6.5×9', h: 300, b: 150, t1: 6.5, t2: 9.0, r: 10.0 }
+      roundStk: [
+        { label: 'STK 48.6×2.4T', od: 48.6, t: 2.4 },
+        { label: 'STK 60.5×3.2T', od: 60.5, t: 3.2 },
+        { label: 'STK 76.3×3.2T', od: 76.3, t: 3.2 },
+        { label: 'STK 89.1×3.2T', od: 89.1, t: 3.2 },
+        { label: 'STK 114.3×4.5T', od: 114.3, t: 4.5 }
+      ],
+      roundSpp: [
+        { label: '25A (1B) 34.0×3.2T', nominal: '25A (1B)', od: 34.0, t: 3.2 },
+        { label: '40A (1½B) 48.6×3.5T', nominal: '40A (1½B)', od: 48.6, t: 3.5 },
+        { label: '50A (2B) 60.5×3.8T', nominal: '50A (2B)', od: 60.5, t: 3.8 },
+        { label: '80A (3B) 89.1×4.2T', nominal: '80A (3B)', od: 89.1, t: 4.2 },
+        { label: '100A (4B) 114.3×4.5T', nominal: '100A (4B)', od: 114.3, t: 4.5 }
       ],
       plate: [
         { label: '4×8자 (1219×2438)', width: 1219, height: 2438 },
@@ -721,25 +728,25 @@
       calculate();
     }
 
+    function setRoundMode(mode) {
+      roundMode = mode;
+      renderInputCard();
+      calculate();
+    }
+
     function applyPreset(type, idx) {
       if (type === 'tube') {
-        const p = presets.tube[idx];
-        state.tube.a = p.a;
-        state.tube.b = p.b;
-        state.tube.t = p.t;
+        Object.assign(state.tube, presets.tube[idx]);
       } else if (type === 'channelC') {
-        const p = presets.channelC[idx];
-        Object.assign(state.channel.c, p);
+        Object.assign(state.channel.c, presets.channelC[idx]);
       } else if (type === 'channelU') {
-        const p = presets.channelU[idx];
-        Object.assign(state.channel.u, p);
-      } else if (type === 'hbeam') {
-        const p = presets.hbeam[idx];
-        Object.assign(state.hbeam, p);
+        Object.assign(state.channel.u, presets.channelU[idx]);
+      } else if (type === 'roundStk') {
+        Object.assign(state.round.stk, presets.roundStk[idx]);
+      } else if (type === 'roundSpp') {
+        Object.assign(state.round.spp, presets.roundSpp[idx]);
       } else if (type === 'plate') {
-        const p = presets.plate[idx];
-        state.plate.width = p.width;
-        state.plate.height = p.height;
+        Object.assign(state.plate, presets.plate[idx]);
       }
       renderInputCard();
       calculate();
@@ -748,7 +755,7 @@
     function setQuickLength(val) {
       if (currentTab === 'tube') state.tube.length = val;
       else if (currentTab === 'channel') state.channel[channelMode].length = val;
-      else if (currentTab === 'hbeam') state.hbeam.length = val;
+      else if (currentTab === 'round') state.round[roundMode].length = val;
       renderInputCard();
       calculate();
     }
@@ -848,37 +855,58 @@
             ${renderCommonLengthQty(s.length, s.qty, s.pricePerKg, 'channelU')}
           `;
         }
-      } else if (currentTab === 'hbeam') {
-        const s = state.hbeam;
-        card.innerHTML = `
-          <h2 class="card-title"><span>H형강 치수 입력 (KS D 3502)</span></h2>
-          <div class="presets">
-            ${presets.hbeam.map((p, i) => `<button type="button" class="preset-btn" onclick="applyPreset('hbeam', ${i})">${p.label}</button>`).join('')}
-          </div>
-          <div class="input-grid cols-3">
-            <div class="field">
-              <label>춤(높이) H</label>
-              <div class="input-box"><input type="number" step="0.1" value="${s.h}" oninput="updateVal('hbeam','h',this.value)"><span class="unit">mm</span></div>
+      } else if (currentTab === 'round') {
+        if (roundMode === 'stk') {
+          const s = state.round.stk;
+          card.innerHTML = `
+            <h2 class="card-title"><span>원형 탄소강관 치수 입력</span></h2>
+            <div class="mode-switch">
+              <button type="button" class="mode-btn active" onclick="setRoundMode('stk')">일반구조용 탄소강관 (KS D 3566)</button>
+              <button type="button" class="mode-btn" onclick="setRoundMode('spp')">일반배관용 탄소강관 (KS D 3507)</button>
             </div>
-            <div class="field">
-              <label>폭 B</label>
-              <div class="input-box"><input type="number" step="0.1" value="${s.b}" oninput="updateVal('hbeam','b',this.value)"><span class="unit">mm</span></div>
+            <div class="presets">
+              ${presets.roundStk.map((p, i) => `<button type="button" class="preset-btn" onclick="applyPreset('roundStk', ${i})">${p.label}</button>`).join('')}
             </div>
-            <div class="field">
-              <label>웹 두께 t1</label>
-              <div class="input-box"><input type="number" step="0.1" value="${s.t1}" oninput="updateVal('hbeam','t1',this.value)"><span class="unit">mm</span></div>
+            <div class="input-grid">
+              <div class="field">
+                <label>바깥지름(외경 D)</label>
+                <div class="input-box"><input type="number" step="0.1" value="${s.od}" oninput="updateVal('roundStk','od',this.value)"><span class="unit">mm</span></div>
+              </div>
+              <div class="field">
+                <label>두께 t</label>
+                <div class="input-box"><input type="number" step="0.1" value="${s.t}" oninput="updateVal('roundStk','t',this.value)"><span class="unit">mm</span></div>
+              </div>
             </div>
-            <div class="field">
-              <label>플랜지 두께 t2</label>
-              <div class="input-box"><input type="number" step="0.1" value="${s.t2}" oninput="updateVal('hbeam','t2',this.value)"><span class="unit">mm</span></div>
+            ${renderCommonLengthQty(s.length, s.qty, s.pricePerKg, 'roundStk')}
+          `;
+        } else {
+          const s = state.round.spp;
+          card.innerHTML = `
+            <h2 class="card-title"><span>원형 탄소강관 치수 입력</span></h2>
+            <div class="mode-switch">
+              <button type="button" class="mode-btn" onclick="setRoundMode('stk')">일반구조용 탄소강관 (KS D 3566)</button>
+              <button type="button" class="mode-btn active" onclick="setRoundMode('spp')">일반배관용 탄소강관 (KS D 3507)</button>
             </div>
-            <div class="field">
-              <label>필렛 반경 r</label>
-              <div class="input-box"><input type="number" step="0.5" value="${s.r}" oninput="updateVal('hbeam','r',this.value)"><span class="unit">mm</span></div>
+            <div class="presets">
+              ${presets.roundSpp.map((p, i) => `<button type="button" class="preset-btn" onclick="applyPreset('roundSpp', ${i})">${p.label}</button>`).join('')}
             </div>
-          </div>
-          ${renderCommonLengthQty(s.length, s.qty, s.pricePerKg, 'hbeam')}
-        `;
+            <div class="input-grid cols-3">
+              <div class="field">
+                <label>호칭경 (메모)</label>
+                <div class="input-box"><input type="text" value="${s.nominal || ''}" placeholder="예: 50A" oninput="updateTextVal('roundSpp','nominal',this.value)"></div>
+              </div>
+              <div class="field">
+                <label>바깥지름(외경 D)</label>
+                <div class="input-box"><input type="number" step="0.1" value="${s.od}" oninput="updateVal('roundSpp','od',this.value)"><span class="unit">mm</span></div>
+              </div>
+              <div class="field">
+                <label>두께 t</label>
+                <div class="input-box"><input type="number" step="0.1" value="${s.t}" oninput="updateVal('roundSpp','t',this.value)"><span class="unit">mm</span></div>
+              </div>
+            </div>
+            ${renderCommonLengthQty(s.length, s.qty, s.pricePerKg, 'roundSpp')}
+          `;
+        }
       } else if (currentTab === 'plate') {
         const s = state.plate;
         card.innerHTML = `
@@ -946,15 +974,20 @@
       if (key === 'tube') state.tube[field] = safe;
       else if (key === 'channelC') state.channel.c[field] = safe;
       else if (key === 'channelU') state.channel.u[field] = safe;
-      else if (key === 'hbeam') state.hbeam[field] = safe;
+      else if (key === 'roundStk') state.round.stk[field] = safe;
+      else if (key === 'roundSpp') state.round.spp[field] = safe;
       else if (key === 'plate') state.plate[field] = safe;
+      calculate();
+    }
+
+    function updateTextVal(key, field, val) {
+      if (key === 'roundSpp') state.round.spp[field] = val;
       calculate();
     }
 
     function getCurrentCalc() {
       if (currentTab === 'tube') {
         const { a, b, t, length, qty, pricePerKg } = state.tube;
-        // KS D 3568 표준식: W = 0.0157 * t * (A + B - 3.287t)
         const unitWeight = Math.max(0, 0.0157 * t * (a + b - 3.287 * t));
         const approxWeight = Math.max(0, 2 * (a + b - 2 * t) * t * 0.00785);
         const diffPct = approxWeight > 0 ? ((approxWeight - unitWeight) / approxWeight) * 100 : 0;
@@ -983,7 +1016,6 @@
       if (currentTab === 'channel') {
         if (channelMode === 'c') {
           const { h, b, cLip, t, length, qty, pricePerKg } = state.channel.c;
-          // 전개길이 = H + 2*B + 2*C - 6*t (절곡부 보정)
           const devLen = Math.max(0, h + 2 * b + 2 * cLip - 6 * t);
           const unitWeight = (devLen * t * DENSITY) / 1000;
           const pieceWeight = unitWeight * length;
@@ -1008,7 +1040,6 @@
           };
         } else {
           const { h, b, t1, t2, r, length, qty, pricePerKg } = state.channel.u;
-          // 단면적 A = 2*B*t2 + (H - 2*t2)*t1 + 0.858*r^2
           const areaMm2 = Math.max(0, 2 * b * t2 + (h - 2 * t2) * t1 + 0.858 * r * r);
           const unitWeight = (areaMm2 * DENSITY) / 1000;
           const pieceWeight = unitWeight * length;
@@ -1034,16 +1065,24 @@
         }
       }
 
-      if (currentTab === 'hbeam') {
-        const { h, b, t1, t2, r, length, qty, pricePerKg } = state.hbeam;
-        // KS D 3502 H형강 단면적: 2*B*t2 + (H - 2*t2)*t1 + 4*(0.2146*r^2) ≈ 2*B*t2 + (H - 2*t2)*t1 + 0.8584*r^2
-        const areaMm2 = Math.max(0, 2 * b * t2 + (h - 2 * t2) * t1 + 0.8584 * r * r);
+      if (currentTab === 'round') {
+        const s = roundMode === 'stk' ? state.round.stk : state.round.spp;
+        const { od, t, length, qty, pricePerKg } = s;
+        const clampedT = Math.min(t, od / 2);
+        // 원형강관 단위중량 공식: W = (D - t) * t * pi * 7.85 / 1000 ≈ 0.02466 * (D - t) * t
+        const areaMm2 = Math.max(0, Math.PI * (od - clampedT) * clampedT);
         const unitWeight = (areaMm2 * DENSITY) / 1000;
         const pieceWeight = unitWeight * length;
         const totalKg = pieceWeight * qty;
+        const idMm = Math.max(0, od - 2 * clampedT);
+        const categoryName = roundMode === 'stk' ? '일반구조용강관(STK)' : '일반배관용강관(SPP)';
+        const specLabel = roundMode === 'stk'
+          ? `STK ${od}×${t}T`
+          : `${s.nominal ? s.nominal + ' ' : ''}${od}×${t}T`;
+
         return {
-          category: 'H형강',
-          spec: `H-${h}×${b}×${t1}×${t2}`,
+          category: categoryName,
+          spec: specLabel,
           unitWeight,
           unitLabel: 'kg/m',
           pieceWeight,
@@ -1054,17 +1093,16 @@
           metrics: [
             { k: '단위중량', v: `${fmt(unitWeight, 2)} kg/m` },
             { k: '1본당 중량', v: `${fmt(pieceWeight, 2)} kg` },
-            { k: '단면적', v: `${fmt(areaMm2, 0)} mm²` },
-            { k: '필렛 4곳 보정', v: `${fmt(0.8584 * r * r, 0)} mm²` }
+            { k: '내경 환산', v: `${fmt(idMm, 1)} mm` },
+            { k: '단면적', v: `${fmt(areaMm2, 0)} mm²` }
           ],
-          formula: `A = 2×${b}×${t2} + (${h} - 2×${t2})×${t1} + 0.8584×${r}² = ${fmt(areaMm2, 0)} mm² → ${fmt(unitWeight, 2)} kg/m`
+          formula: `W = 0.02466 × (${od} - ${t}) × ${t} = ${fmt(unitWeight, 2)} kg/m (π×(D-t)×t×7.85÷1000)`
         };
       }
 
-      // plate
       const { width, height, t, qty, pricePerKg } = state.plate;
       const areaM2 = (width * height) / 1000000;
-      const kgPerM2 = t * DENSITY; // 1mm당 7.85 kg/m2
+      const kgPerM2 = t * DENSITY;
       const pieceWeight = areaM2 * kgPerM2;
       const totalKg = pieceWeight * qty;
       const pyeongWeight = kgPerM2 * 3.305785;
@@ -1088,7 +1126,7 @@
       };
     }
 
-    function renderSvg(data) {
+    function renderSvg() {
       const svg = document.getElementById('sectionSvg');
       const cap = document.getElementById('svgCaption');
 
@@ -1140,23 +1178,19 @@
           <text x="130" y="164" fill="#94a3b8" font-size="11" text-anchor="middle">H:${h} · B:${b} · t1:${t1} · t2:${t2}</text>
         `;
         cap.textContent = '일반 ㄷ형강(채널) 단면 모식도';
-      } else if (currentTab === 'hbeam') {
-        const { h, b, t1, t2 } = state.hbeam;
-        const scale = Math.min(115 / Math.max(h, 30), 150 / Math.max(b, 30));
-        const H = Math.max(50, h * scale);
-        const B = Math.max(45, b * scale);
-        const web = Math.max(3, Math.min(12, t1 * scale * 1.5));
-        const flg = Math.max(4, Math.min(14, t2 * scale * 1.5));
-        const cx = 130;
-        const y0 = (155 - H) / 2;
+      } else if (currentTab === 'round') {
+        const s = roundMode === 'stk' ? state.round.stk : state.round.spp;
+        const { od, t } = s;
+        const rOut = Math.max(22, Math.min(62, (od / 120) * 56));
+        const ratio = od > 0 ? Math.min(0.45, Math.max(0.08, t / (od / 2))) : 0.15;
+        const rIn = Math.max(6, rOut * (1 - ratio));
 
         svg.innerHTML = `
-          <rect x="${cx - B / 2}" y="${y0}" width="${B}" height="${flg}" fill="rgba(59,130,246,0.28)" stroke="#60a5fa" stroke-width="1.6"/>
-          <rect x="${cx - B / 2}" y="${y0 + H - flg}" width="${B}" height="${flg}" fill="rgba(59,130,246,0.28)" stroke="#60a5fa" stroke-width="1.6"/>
-          <rect x="${cx - web / 2}" y="${y0 + flg}" width="${web}" height="${Math.max(8, H - flg * 2)}" fill="rgba(96,165,250,0.35)" stroke="#60a5fa" stroke-width="1.5"/>
-          <text x="130" y="164" fill="#94a3b8" font-size="11" text-anchor="middle">H:${h} · B:${b} · t1:${t1} · t2:${t2}</text>
+          <circle cx="130" cy="78" r="${rOut}" fill="rgba(59,130,246,0.25)" stroke="#60a5fa" stroke-width="2.2"/>
+          <circle cx="130" cy="78" r="${rIn}" fill="#090e1a" stroke="#38bdf8" stroke-width="1.4"/>
+          <text x="130" y="164" fill="#94a3b8" font-size="11" text-anchor="middle">외경 D: ${od}mm · 두께 t: ${t}mm</text>
         `;
-        cap.textContent = 'H형강 단면 모식도';
+        cap.textContent = roundMode === 'stk' ? '일반구조용 탄소강관(STK) 단면 모식도' : '일반배관용 탄소강관(SPP) 단면 모식도';
       } else {
         const { width, height, t } = state.plate;
         svg.innerHTML = `
@@ -1180,7 +1214,7 @@
         .join('');
 
       document.getElementById('formulaBox').textContent = data.formula;
-      renderSvg(data);
+      renderSvg();
     }
 
     function addToBom() {
@@ -1309,7 +1343,6 @@
       showToast('CSV 파일이 다운로드되었습니다.');
     }
 
-    // 초기 렌더링
     renderInputCard();
     calculate();
     renderBom();
