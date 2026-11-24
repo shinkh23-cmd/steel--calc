@@ -1,0 +1,1318 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>철강 자재 통합 중량 계산기</title>
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="철강중량계산기" />
+  <meta name="theme-color" content="#0f172a" />
+  <style>
+    :root {
+      --bg: #0b1120;
+      --surface: #111827;
+      --surface-2: #1e293b;
+      --border: #334155;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --accent: #3b82f6;
+      --accent-hover: #2563eb;
+      --accent-soft: rgba(59, 130, 246, 0.16);
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --radius: 14px;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans KR", "Malgun Gothic", sans-serif;
+      background: linear-gradient(180deg, #090d16 0%, var(--bg) 100%);
+      color: var(--text);
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+
+    .app-wrap {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 18px 16px 64px;
+    }
+
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      margin-bottom: 16px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      background: var(--accent-soft);
+      border: 1px solid rgba(59, 130, 246, 0.45);
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      font-size: 18px;
+      color: #60a5fa;
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: 19px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .brand p {
+      margin: 2px 0 0;
+      font-size: 12.5px;
+      color: var(--muted);
+    }
+
+    .density-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-size: 12.5px;
+      color: #cbd5e1;
+    }
+
+    .density-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+    }
+
+    .tabs {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .tab-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 10px;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .tab-btn span.sub {
+      font-size: 11px;
+      font-weight: 400;
+      opacity: 0.8;
+    }
+
+    .tab-btn:hover {
+      border-color: #475569;
+      color: var(--text);
+    }
+
+    .tab-btn.active {
+      background: var(--accent-soft);
+      border-color: var(--accent);
+      color: #93c5fd;
+      box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.25);
+    }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px;
+      margin-bottom: 16px;
+    }
+
+    .card-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin: 0 0 14px;
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    .section-label {
+      font-size: 12.5px;
+      font-weight: 600;
+      color: #cbd5e1;
+      margin: 14px 0 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .presets {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-bottom: 14px;
+    }
+
+    .preset-btn {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: #e2e8f0;
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-size: 12.5px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .preset-btn:hover {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      color: #fff;
+    }
+
+    .mode-switch {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      background: var(--surface-2);
+      padding: 4px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      margin-bottom: 14px;
+    }
+
+    .mode-btn {
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      padding: 8px;
+      border-radius: 7px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .mode-btn.active {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .input-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    .input-grid.cols-3 {
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    .field label {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 5px;
+    }
+
+    .input-box {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .input-box input,
+    .input-box select {
+      width: 100%;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 38px 10px 12px;
+      color: var(--text);
+      font-size: 15px;
+      font-weight: 600;
+      outline: none;
+      transition: border-color 0.15s ease;
+    }
+
+    .input-box select {
+      padding-right: 12px;
+    }
+
+    .input-box input:focus,
+    .input-box select:focus {
+      border-color: var(--accent);
+    }
+
+    .unit {
+      position: absolute;
+      right: 11px;
+      font-size: 12px;
+      color: var(--muted);
+      pointer-events: none;
+    }
+
+    .quick-lengths {
+      display: flex;
+      gap: 6px;
+      margin-top: 6px;
+      flex-wrap: wrap;
+    }
+
+    .mini-chip {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: #cbd5e1;
+      border-radius: 6px;
+      padding: 3px 8px;
+      font-size: 11.5px;
+      cursor: pointer;
+    }
+
+    .mini-chip:hover {
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    .btn-primary {
+      width: 100%;
+      margin-top: 16px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 11px;
+      padding: 13px 16px;
+      font-size: 14.5px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-hover);
+    }
+
+    .result-hero {
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.18), rgba(16, 185, 129, 0.1));
+      border: 1px solid rgba(96, 165, 250, 0.35);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 14px;
+    }
+
+    .result-label {
+      font-size: 12px;
+      color: #cbd5e1;
+    }
+
+    .result-main {
+      font-size: 28px;
+      font-weight: 800;
+      color: #fff;
+      margin: 4px 0;
+      letter-spacing: -0.02em;
+    }
+
+    .result-sub {
+      font-size: 13px;
+      color: #93c5fd;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .metric-box {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 11px 12px;
+    }
+
+    .metric-box .k {
+      font-size: 11.5px;
+      color: var(--muted);
+    }
+
+    .metric-box .v {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      margin-top: 2px;
+    }
+
+    .formula-box {
+      background: #090e1a;
+      border: 1px dashed #334155;
+      border-radius: 10px;
+      padding: 11px 12px;
+      font-size: 12px;
+      color: #cbd5e1;
+      word-break: break-all;
+    }
+
+    .svg-wrap {
+      background: #090e1a;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 220px;
+    }
+
+    .svg-caption {
+      margin-top: 8px;
+      font-size: 12px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .bom-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .btn-secondary {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 9px;
+      padding: 8px 12px;
+      font-size: 12.5px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--accent);
+    }
+
+    .btn-danger-sm {
+      background: rgba(239, 68, 68, 0.14);
+      border: 1px solid rgba(239, 68, 68, 0.35);
+      color: #fca5a5;
+      border-radius: 7px;
+      padding: 4px 8px;
+      font-size: 11.5px;
+      cursor: pointer;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      margin-top: 12px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    th, td {
+      padding: 10px 10px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    th {
+      color: var(--muted);
+      font-weight: 600;
+      font-size: 12px;
+      background: rgba(30, 41, 59, 0.6);
+    }
+
+    td.num, th.num {
+      text-align: right;
+    }
+
+    .bom-summary {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: #0f172a;
+      color: #f8fafc;
+      border: 1px solid var(--accent);
+      padding: 10px 16px;
+      border-radius: 10px;
+      font-size: 13px;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.2s ease;
+      z-index: 999;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.45);
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    @media (max-width: 860px) {
+      .main-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .tabs {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .input-grid.cols-3 {
+        grid-template-columns: 1fr;
+      }
+      .result-main {
+        font-size: 24px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-wrap">
+    <header>
+      <div class="brand">
+        <div class="brand-icon">Fe</div>
+        <div>
+          <h1>철강 자재 통합 중량 계산기</h1>
+          <p>각형강관(KS D 3568) · C형강/채널 · H형강(KS D 3502) · 철판/평철</p>
+        </div>
+      </div>
+      <div class="density-badge">
+        <span class="density-dot"></span>
+        <span>철 비중: <strong>7.85 g/cm³</strong></span>
+      </div>
+    </header>
+
+    <nav class="tabs" role="tablist">
+      <button class="tab-btn active" data-tab="tube" onclick="switchTab('tube')">
+        <span>각형강관</span>
+        <span class="sub">KS D 3568</span>
+      </button>
+      <button class="tab-btn" data-tab="channel" onclick="switchTab('channel')">
+        <span>C형강 · 채널</span>
+        <span class="sub">KS D 3530 / 3502</span>
+      </button>
+      <button class="tab-btn" data-tab="hbeam" onclick="switchTab('hbeam')">
+        <span>H형강 (H빔)</span>
+        <span class="sub">KS D 3502</span>
+      </button>
+      <button class="tab-btn" data-tab="plate" onclick="switchTab('plate')">
+        <span>철판 · 평철</span>
+        <span class="sub">판재 / 플랫바</span>
+      </button>
+    </nav>
+
+    <div class="main-grid">
+      <!-- 좌측 입력 영역 -->
+      <div>
+        <div class="card" id="inputCard"></div>
+      </div>
+
+      <!-- 우측 결과 및 단면도 영역 -->
+      <div>
+        <div class="card">
+          <h2 class="card-title">
+            <span>계산 결과</span>
+            <span id="badgeSpec" style="font-size:12px;color:#93c5fd;font-weight:600;"></span>
+          </h2>
+
+          <div class="result-hero">
+            <div class="result-label" id="totalLabel">총 중량</div>
+            <div class="result-main" id="totalWeightKg">0.00 kg</div>
+            <div class="result-sub" id="totalWeightTon">0.0000 ton</div>
+          </div>
+
+          <div class="metrics" id="metricsGrid"></div>
+
+          <div class="formula-box" id="formulaBox"></div>
+        </div>
+
+        <div class="card">
+          <h2 class="card-title"><span>실시간 단면 미리보기</span></h2>
+          <div class="svg-wrap">
+            <svg id="sectionSvg" width="260" height="170" viewBox="0 0 260 170"></svg>
+            <div class="svg-caption" id="svgCaption"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 통합 물량 산출표 (BOM) -->
+    <div class="card">
+      <div class="card-title">
+        <span>통합 물량 산출표 (BOM)</span>
+        <div class="bom-actions">
+          <button class="btn-secondary" onclick="copyBomText()">발주 텍스트 복사</button>
+          <button class="btn-secondary" onclick="exportBomCsv()">CSV 다운로드</button>
+          <button class="btn-secondary" onclick="clearBom()">목록 비우기</button>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>구분</th>
+              <th>규격</th>
+              <th class="num">단위중량</th>
+              <th class="num">길이/매수</th>
+              <th class="num">수량</th>
+              <th class="num">총 중량</th>
+              <th class="num">예상 금액</th>
+              <th class="num">관리</th>
+            </tr>
+          </thead>
+          <tbody id="bomBody">
+            <tr>
+              <td colspan="8" style="text-align:center;color:var(--muted);padding:20px;">
+                위에서 치수를 입력한 뒤 <strong>[물량 산출표에 추가]</strong>를 누르면 자재가 누적됩니다.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="bom-summary">
+        <div>합계 수량: <span id="bomTotalQty">0</span>개</div>
+        <div>합계 중량: <span id="bomTotalKg">0.00 kg</span> (<span id="bomTotalTon">0.0000 ton</span>)</div>
+        <div>합계 금액: <span id="bomTotalPrice">0 원</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const DENSITY = 7.85; // g/cm3 == kg / (1000 cm3)
+    let currentTab = 'tube';
+    let channelMode = 'c'; // 'c' = 경량 C형강, 'u' = 일반 ㄷ형강(채널)
+    let bomList = [];
+
+    const state = {
+      tube: { a: 100, b: 50, t: 4.0, length: 6, qty: 1, pricePerKg: 0 },
+      channel: {
+        c: { h: 100, b: 50, cLip: 20, t: 2.3, length: 6, qty: 1, pricePerKg: 0 },
+        u: { h: 100, b: 50, t1: 5.0, t2: 7.5, r: 8.0, length: 6, qty: 1, pricePerKg: 0 }
+      },
+      hbeam: { h: 200, b: 100, t1: 5.5, t2: 8.0, r: 8.0, length: 6, qty: 1, pricePerKg: 0 },
+      plate: { width: 1219, height: 2438, t: 6.0, qty: 1, pricePerKg: 0 }
+    };
+
+    const presets = {
+      tube: [
+        { label: '100×50×4.0T', a: 100, b: 50, t: 4.0 },
+        { label: '100×100×3.2T', a: 100, b: 100, t: 3.2 },
+        { label: '75×45×2.3T', a: 75, b: 45, t: 2.3 },
+        { label: '50×50×2.3T', a: 50, b: 50, t: 2.3 },
+        { label: '125×75×3.2T', a: 125, b: 75, t: 3.2 }
+      ],
+      channelC: [
+        { label: 'C-100×50×20×2.3T', h: 100, b: 50, cLip: 20, t: 2.3 },
+        { label: 'C-125×50×20×2.3T', h: 125, b: 50, cLip: 20, t: 2.3 },
+        { label: 'C-150×50×20×2.3T', h: 150, b: 50, cLip: 20, t: 2.3 },
+        { label: 'C-75×45×15×1.6T', h: 75, b: 45, cLip: 15, t: 1.6 }
+      ],
+      channelU: [
+        { label: 'ㄷ-75×40×5×7T', h: 75, b: 40, t1: 5.0, t2: 7.0, r: 8.0 },
+        { label: 'ㄷ-100×50×5×7.5T', h: 100, b: 50, t1: 5.0, t2: 7.5, r: 8.0 },
+        { label: 'ㄷ-125×65×6×8T', h: 125, b: 65, t1: 6.0, t2: 8.0, r: 9.0 },
+        { label: 'ㄷ-150×75×6.5×9T', h: 150, b: 75, t1: 6.5, t2: 9.0, r: 10.0 }
+      ],
+      hbeam: [
+        { label: 'H-150×75×5×7', h: 150, b: 75, t1: 5.0, t2: 7.0, r: 8.0 },
+        { label: 'H-200×100×5.5×8', h: 200, b: 100, t1: 5.5, t2: 8.0, r: 8.0 },
+        { label: 'H-250×125×6×9', h: 250, b: 125, t1: 6.0, t2: 9.0, r: 10.0 },
+        { label: 'H-300×150×6.5×9', h: 300, b: 150, t1: 6.5, t2: 9.0, r: 10.0 }
+      ],
+      plate: [
+        { label: '4×8자 (1219×2438)', width: 1219, height: 2438 },
+        { label: '5×10자 (1524×3048)', width: 1524, height: 3048 },
+        { label: '1000×2000', width: 1000, height: 2000 },
+        { label: '평철 폭 100mm (1m 환산)', width: 100, height: 1000 }
+      ]
+    };
+
+    function showToast(msg) {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.classList.add('show');
+      clearTimeout(window.__toastTimer);
+      window.__toastTimer = setTimeout(() => el.classList.remove('show'), 2200);
+    }
+
+    function fmt(num, dec = 2) {
+      if (!isFinite(num)) return '0';
+      return Number(num).toLocaleString('ko-KR', {
+        minimumFractionDigits: dec,
+        maximumFractionDigits: dec
+      });
+    }
+
+    function switchTab(tab) {
+      currentTab = tab;
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === tab);
+      });
+      renderInputCard();
+      calculate();
+    }
+
+    function setChannelMode(mode) {
+      channelMode = mode;
+      renderInputCard();
+      calculate();
+    }
+
+    function applyPreset(type, idx) {
+      if (type === 'tube') {
+        const p = presets.tube[idx];
+        state.tube.a = p.a;
+        state.tube.b = p.b;
+        state.tube.t = p.t;
+      } else if (type === 'channelC') {
+        const p = presets.channelC[idx];
+        Object.assign(state.channel.c, p);
+      } else if (type === 'channelU') {
+        const p = presets.channelU[idx];
+        Object.assign(state.channel.u, p);
+      } else if (type === 'hbeam') {
+        const p = presets.hbeam[idx];
+        Object.assign(state.hbeam, p);
+      } else if (type === 'plate') {
+        const p = presets.plate[idx];
+        state.plate.width = p.width;
+        state.plate.height = p.height;
+      }
+      renderInputCard();
+      calculate();
+    }
+
+    function setQuickLength(val) {
+      if (currentTab === 'tube') state.tube.length = val;
+      else if (currentTab === 'channel') state.channel[channelMode].length = val;
+      else if (currentTab === 'hbeam') state.hbeam.length = val;
+      renderInputCard();
+      calculate();
+    }
+
+    function renderInputCard() {
+      const card = document.getElementById('inputCard');
+
+      if (currentTab === 'tube') {
+        const s = state.tube;
+        card.innerHTML = `
+          <h2 class="card-title"><span>각형강관 치수 입력 (KS D 3568)</span></h2>
+          <div class="section-label"><span>자주 쓰는 규격 프리셋</span></div>
+          <div class="presets">
+            ${presets.tube.map((p, i) => `<button type="button" class="preset-btn" onclick="applyPreset('tube', ${i})">${p.label}</button>`).join('')}
+          </div>
+          <div class="input-grid cols-3">
+            <div class="field">
+              <label>가로 A</label>
+              <div class="input-box"><input type="number" step="0.1" value="${s.a}" oninput="updateVal('tube','a',this.value)"><span class="unit">mm</span></div>
+            </div>
+            <div class="field">
+              <label>세로 B</label>
+              <div class="input-box"><input type="number" step="0.1" value="${s.b}" oninput="updateVal('tube','b',this.value)"><span class="unit">mm</span></div>
+            </div>
+            <div class="field">
+              <label>두께 t</label>
+              <div class="input-box"><input type="number" step="0.1" value="${s.t}" oninput="updateVal('tube','t',this.value)"><span class="unit">mm</span></div>
+            </div>
+          </div>
+          ${renderCommonLengthQty(s.length, s.qty, s.pricePerKg, 'tube')}
+        `;
+      } else if (currentTab === 'channel') {
+        if (channelMode === 'c') {
+          const s = state.channel.c;
+          card.innerHTML = `
+            <h2 class="card-title"><span>C형강 · 채널 치수 입력</span></h2>
+            <div class="mode-switch">
+              <button type="button" class="mode-btn active" onclick="setChannelMode('c')">경량 C형강 (립 포함)</button>
+              <button type="button" class="mode-btn" onclick="setChannelMode('u')">일반 ㄷ형강 (KS D 3502)</button>
+            </div>
+            <div class="presets">
+              ${presets.channelC.map((p, i) => `<button type="button" class="preset-btn" onclick="applyPreset('channelC', ${i})">${p.label}</button>`).join('')}
+            </div>
+            <div class="input-grid">
+              <div class="field">
+                <label>높이 H</label>
+                <div class="input-box"><input type="number" step="0.1" value="${s.h}" oninput="updateVal('channelC','h',this.value)"><span class="unit">mm</span></div>
+              </div>
+              <div class="field">
+                <label>폭 B</label>
+                <div class="input-box"><input type="number" step="0.1" value="${s.b}" oninput="updateVal('channelC','b',this.value)"><span class="unit">mm</span></div>
+              </div>
+              <div class="field">
+                <label>립 길이 C</label>
+                <div class="input-box"><input type="number" step="0.1" value="${s.cLip}" oninput="updateVal('channelC','cLip',this.value)"><span class="unit">mm</span></div>
+              </div>
+              <div class="field">
+                <label>두께 t</label>
+                <div class="input-box"><input type="number" step="0.1" value="${s.t}" oninput="updateVal('channelC','t',this.value)"><span class="unit">mm</span></div>
+              </div>
+            </div>
+            ${renderCommonLengthQty(s.length, s.qty, s.pricePerKg, 'channelC')}
+          `;
+        } else {
+          const s = state.channel.u;
+          card.innerHTML = `
+            <h2 class="card-title"><span>C형강 · 채널 치수 입력</span></h2>
+            <div class="mode-switch">
+              <button type="button" class="mode-btn" onclick="setChannelMode('c')">경량 C형강 (립 포함)</button>
+              <button type="button" class="mode-btn active" onclick="setChannelMode('u')">일반 ㄷ형강 (KS D 3502)</button>
+            </div>
+            <div class="presets">
+              ${presets.channelU.map((p, i) => `<button type="button" class="preset-btn" onclick="applyPreset('channelU', ${i})">${p.label}</button>`).join('')}
+            </div>
+            <div class="input-grid cols-3">
+              <div class="field">
+                <label>높이 H</label>
+                <div class="input-box"><input type="number" step="0.1" value="${s.h}" oninput="updateVal('channelU','h',this.value)"><span class="unit">mm</span></div>
+              </div>
+              <div class="field">
+                <label>폭 B</label>
+                <div class="input-box"><input type="number" step="0.1" value="${s.b}" oninput="updateVal('channelU','b',this.value)"><span class="unit">mm</span></div>
+              </div>
+              <div class="field">
+                <label>웹 두께 t1</label>
+                <div class="input-box"><input type="number" step="0.1" value="${s.t1}" oninput="updateVal('channelU','t1',this.value)"><span class="unit">mm</span></div>
+              </div>
+              <div class="field">
+                <label>플랜지 두께 t2</label>
+                <div class="input-box"><input type="number" step="0.1" value="${s.t2}" oninput="updateVal('channelU','t2',this.value)"><span class="unit">mm</span></div>
+              </div>
+              <div class="field">
+                <label>필렛 반경 r</label>
+                <div class="input-box"><input type="number" step="0.5" value="${s.r}" oninput="updateVal('channelU','r',this.value)"><span class="unit">mm</span></div>
+              </div>
+            </div>
+            ${renderCommonLengthQty(s.length, s.qty, s.pricePerKg, 'channelU')}
+          `;
+        }
+      } else if (currentTab === 'hbeam') {
+        const s = state.hbeam;
+        card.innerHTML = `
+          <h2 class="card-title"><span>H형강 치수 입력 (KS D 3502)</span></h2>
+          <div class="presets">
+            ${presets.hbeam.map((p, i) => `<button type="button" class="preset-btn" onclick="applyPreset('hbeam', ${i})">${p.label}</button>`).join('')}
+          </div>
+          <div class="input-grid cols-3">
+            <div class="field">
+              <label>춤(높이) H</label>
+              <div class="input-box"><input type="number" step="0.1" value="${s.h}" oninput="updateVal('hbeam','h',this.value)"><span class="unit">mm</span></div>
+            </div>
+            <div class="field">
+              <label>폭 B</label>
+              <div class="input-box"><input type="number" step="0.1" value="${s.b}" oninput="updateVal('hbeam','b',this.value)"><span class="unit">mm</span></div>
+            </div>
+            <div class="field">
+              <label>웹 두께 t1</label>
+              <div class="input-box"><input type="number" step="0.1" value="${s.t1}" oninput="updateVal('hbeam','t1',this.value)"><span class="unit">mm</span></div>
+            </div>
+            <div class="field">
+              <label>플랜지 두께 t2</label>
+              <div class="input-box"><input type="number" step="0.1" value="${s.t2}" oninput="updateVal('hbeam','t2',this.value)"><span class="unit">mm</span></div>
+            </div>
+            <div class="field">
+              <label>필렛 반경 r</label>
+              <div class="input-box"><input type="number" step="0.5" value="${s.r}" oninput="updateVal('hbeam','r',this.value)"><span class="unit">mm</span></div>
+            </div>
+          </div>
+          ${renderCommonLengthQty(s.length, s.qty, s.pricePerKg, 'hbeam')}
+        `;
+      } else if (currentTab === 'plate') {
+        const s = state.plate;
+        card.innerHTML = `
+          <h2 class="card-title"><span>철판 · 평철 치수 입력</span></h2>
+          <div class="presets">
+            ${presets.plate.map((p, i) => `<button type="button" class="preset-btn" onclick="applyPreset('plate', ${i})">${p.label}</button>`).join('')}
+          </div>
+          <div class="input-grid cols-3">
+            <div class="field">
+              <label>가로(폭)</label>
+              <div class="input-box"><input type="number" step="1" value="${s.width}" oninput="updateVal('plate','width',this.value)"><span class="unit">mm</span></div>
+            </div>
+            <div class="field">
+              <label>세로(길이)</label>
+              <div class="input-box"><input type="number" step="1" value="${s.height}" oninput="updateVal('plate','height',this.value)"><span class="unit">mm</span></div>
+            </div>
+            <div class="field">
+              <label>두께 t</label>
+              <div class="input-box"><input type="number" step="0.1" value="${s.t}" oninput="updateVal('plate','t',this.value)"><span class="unit">mm</span></div>
+            </div>
+          </div>
+          <div class="input-grid" style="margin-top:12px;">
+            <div class="field">
+              <label>매수 / 수량</label>
+              <div class="input-box"><input type="number" min="1" step="1" value="${s.qty}" oninput="updateVal('plate','qty',this.value)"><span class="unit">매</span></div>
+            </div>
+            <div class="field">
+              <label>kg당 단가 (선택)</label>
+              <div class="input-box"><input type="number" min="0" step="10" value="${s.pricePerKg || ''}" placeholder="0" oninput="updateVal('plate','pricePerKg',this.value)"><span class="unit">원</span></div>
+            </div>
+          </div>
+          <button type="button" class="btn-primary" onclick="addToBom()">+ 물량 산출표에 추가</button>
+        `;
+      }
+    }
+
+    function renderCommonLengthQty(length, qty, pricePerKg, key) {
+      return `
+        <div class="input-grid cols-3" style="margin-top:12px;">
+          <div class="field">
+            <label>길이 L</label>
+            <div class="input-box"><input type="number" step="0.01" min="0" value="${length}" oninput="updateVal('${key}','length',this.value)"><span class="unit">m</span></div>
+            <div class="quick-lengths">
+              <button type="button" class="mini-chip" onclick="setQuickLength(6)">6m</button>
+              <button type="button" class="mini-chip" onclick="setQuickLength(8)">8m</button>
+              <button type="button" class="mini-chip" onclick="setQuickLength(12)">12m</button>
+            </div>
+          </div>
+          <div class="field">
+            <label>수량</label>
+            <div class="input-box"><input type="number" min="1" step="1" value="${qty}" oninput="updateVal('${key}','qty',this.value)"><span class="unit">본</span></div>
+          </div>
+          <div class="field">
+            <label>kg당 단가 (선택)</label>
+            <div class="input-box"><input type="number" min="0" step="10" value="${pricePerKg || ''}" placeholder="0" oninput="updateVal('${key}','pricePerKg',this.value)"><span class="unit">원</span></div>
+          </div>
+        </div>
+        <button type="button" class="btn-primary" onclick="addToBom()">+ 물량 산출표에 추가</button>
+      `;
+    }
+
+    function updateVal(key, field, rawVal) {
+      const val = parseFloat(rawVal);
+      const safe = isNaN(val) ? 0 : val;
+      if (key === 'tube') state.tube[field] = safe;
+      else if (key === 'channelC') state.channel.c[field] = safe;
+      else if (key === 'channelU') state.channel.u[field] = safe;
+      else if (key === 'hbeam') state.hbeam[field] = safe;
+      else if (key === 'plate') state.plate[field] = safe;
+      calculate();
+    }
+
+    function getCurrentCalc() {
+      if (currentTab === 'tube') {
+        const { a, b, t, length, qty, pricePerKg } = state.tube;
+        // KS D 3568 표준식: W = 0.0157 * t * (A + B - 3.287t)
+        const unitWeight = Math.max(0, 0.0157 * t * (a + b - 3.287 * t));
+        const approxWeight = Math.max(0, 2 * (a + b - 2 * t) * t * 0.00785);
+        const diffPct = approxWeight > 0 ? ((approxWeight - unitWeight) / approxWeight) * 100 : 0;
+        const unitPieceWeight = unitWeight * length;
+        const totalKg = unitPieceWeight * qty;
+        return {
+          category: '각형강관',
+          spec: `${a}×${b}×${t}T`,
+          unitWeight,
+          unitLabel: 'kg/m',
+          pieceWeight: unitPieceWeight,
+          totalKg,
+          pricePerKg,
+          lengthLabel: `${length}m`,
+          qty,
+          metrics: [
+            { k: '단위중량 (KS 표준)', v: `${fmt(unitWeight, 2)} kg/m` },
+            { k: '1본당 중량', v: `${fmt(unitPieceWeight, 2)} kg` },
+            { k: '전개폭 약산식', v: `${fmt(approxWeight, 2)} kg/m` },
+            { k: '약산 오차(크게 나옴)', v: `+${fmt(diffPct, 1)}%` }
+          ],
+          formula: `W = 0.0157 × ${t} × (${a} + ${b} - 3.287 × ${t}) = ${fmt(unitWeight, 2)} kg/m`
+        };
+      }
+
+      if (currentTab === 'channel') {
+        if (channelMode === 'c') {
+          const { h, b, cLip, t, length, qty, pricePerKg } = state.channel.c;
+          // 전개길이 = H + 2*B + 2*C - 6*t (절곡부 보정)
+          const devLen = Math.max(0, h + 2 * b + 2 * cLip - 6 * t);
+          const unitWeight = (devLen * t * DENSITY) / 1000;
+          const pieceWeight = unitWeight * length;
+          const totalKg = pieceWeight * qty;
+          return {
+            category: '경량 C형강',
+            spec: `C-${h}×${b}×${cLip}×${t}T`,
+            unitWeight,
+            unitLabel: 'kg/m',
+            pieceWeight,
+            totalKg,
+            pricePerKg,
+            lengthLabel: `${length}m`,
+            qty,
+            metrics: [
+              { k: '단위중량', v: `${fmt(unitWeight, 2)} kg/m` },
+              { k: '1본당 중량', v: `${fmt(pieceWeight, 2)} kg` },
+              { k: '보정 전개폭', v: `${fmt(devLen, 1)} mm` },
+              { k: '단면적 환산', v: `${fmt(unitWeight / 0.00785, 0)} mm²` }
+            ],
+            formula: `W = (${h} + 2×${b} + 2×${cLip} - 6×${t}) × ${t} × 7.85 ÷ 1000 = ${fmt(unitWeight, 2)} kg/m`
+          };
+        } else {
+          const { h, b, t1, t2, r, length, qty, pricePerKg } = state.channel.u;
+          // 단면적 A = 2*B*t2 + (H - 2*t2)*t1 + 0.858*r^2
+          const areaMm2 = Math.max(0, 2 * b * t2 + (h - 2 * t2) * t1 + 0.858 * r * r);
+          const unitWeight = (areaMm2 * DENSITY) / 1000;
+          const pieceWeight = unitWeight * length;
+          const totalKg = pieceWeight * qty;
+          return {
+            category: 'ㄷ형강(채널)',
+            spec: `ㄷ-${h}×${b}×${t1}×${t2}`,
+            unitWeight,
+            unitLabel: 'kg/m',
+            pieceWeight,
+            totalKg,
+            pricePerKg,
+            lengthLabel: `${length}m`,
+            qty,
+            metrics: [
+              { k: '단위중량', v: `${fmt(unitWeight, 2)} kg/m` },
+              { k: '1본당 중량', v: `${fmt(pieceWeight, 2)} kg` },
+              { k: '단면적', v: `${fmt(areaMm2, 0)} mm²` },
+              { k: '필렛 보정(0.858r²)', v: `${fmt(0.858 * r * r, 0)} mm²` }
+            ],
+            formula: `A = 2×${b}×${t2} + (${h} - 2×${t2})×${t1} + 0.858×${r}² = ${fmt(areaMm2, 0)} mm² → ${fmt(unitWeight, 2)} kg/m`
+          };
+        }
+      }
+
+      if (currentTab === 'hbeam') {
+        const { h, b, t1, t2, r, length, qty, pricePerKg } = state.hbeam;
+        // KS D 3502 H형강 단면적: 2*B*t2 + (H - 2*t2)*t1 + 4*(0.2146*r^2) ≈ 2*B*t2 + (H - 2*t2)*t1 + 0.8584*r^2
+        const areaMm2 = Math.max(0, 2 * b * t2 + (h - 2 * t2) * t1 + 0.8584 * r * r);
+        const unitWeight = (areaMm2 * DENSITY) / 1000;
+        const pieceWeight = unitWeight * length;
+        const totalKg = pieceWeight * qty;
+        return {
+          category: 'H형강',
+          spec: `H-${h}×${b}×${t1}×${t2}`,
+          unitWeight,
+          unitLabel: 'kg/m',
+          pieceWeight,
+          totalKg,
+          pricePerKg,
+          lengthLabel: `${length}m`,
+          qty,
+          metrics: [
+            { k: '단위중량', v: `${fmt(unitWeight, 2)} kg/m` },
+            { k: '1본당 중량', v: `${fmt(pieceWeight, 2)} kg` },
+            { k: '단면적', v: `${fmt(areaMm2, 0)} mm²` },
+            { k: '필렛 4곳 보정', v: `${fmt(0.8584 * r * r, 0)} mm²` }
+          ],
+          formula: `A = 2×${b}×${t2} + (${h} - 2×${t2})×${t1} + 0.8584×${r}² = ${fmt(areaMm2, 0)} mm² → ${fmt(unitWeight, 2)} kg/m`
+        };
+      }
+
+      // plate
+      const { width, height, t, qty, pricePerKg } = state.plate;
+      const areaM2 = (width * height) / 1000000;
+      const kgPerM2 = t * DENSITY; // 1mm당 7.85 kg/m2
+      const pieceWeight = areaM2 * kgPerM2;
+      const totalKg = pieceWeight * qty;
+      const pyeongWeight = kgPerM2 * 3.305785;
+      return {
+        category: '철판/평철',
+        spec: `${width}×${height}×${t}T`,
+        unitWeight: pieceWeight,
+        unitLabel: 'kg/매',
+        pieceWeight,
+        totalKg,
+        pricePerKg,
+        lengthLabel: `${width}×${height}`,
+        qty,
+        metrics: [
+          { k: '1매당 중량', v: `${fmt(pieceWeight, 2)} kg` },
+          { k: '㎡당 중량', v: `${fmt(kgPerM2, 2)} kg/㎡` },
+          { k: '1평당 중량(3.306㎡)', v: `${fmt(pyeongWeight, 2)} kg/평` },
+          { k: '판 면적(1매)', v: `${fmt(areaM2, 3)} ㎡` }
+        ],
+        formula: `1매 중량 = (${width} × ${height} ÷ 1,000,000) × (${t} × 7.85) = ${fmt(pieceWeight, 2)} kg`
+      };
+    }
+
+    function renderSvg(data) {
+      const svg = document.getElementById('sectionSvg');
+      const cap = document.getElementById('svgCaption');
+
+      if (currentTab === 'tube') {
+        const { a, b, t } = state.tube;
+        const maxSide = Math.max(a, b, 10);
+        const w = Math.max(36, (a / maxSide) * 150);
+        const h = Math.max(36, (b / maxSide) * 110);
+        const x = (260 - w) / 2;
+        const y = (160 - h) / 2;
+        const wall = Math.max(3, Math.min(w * 0.22, h * 0.22, (t / Math.min(a, b || a)) * Math.min(w, h) * 1.4));
+        const rx = Math.min(18, wall * 1.3);
+
+        svg.innerHTML = `
+          <rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx}" fill="rgba(59,130,246,0.22)" stroke="#60a5fa" stroke-width="2.2"/>
+          <rect x="${x + wall}" y="${y + wall}" width="${Math.max(4, w - wall * 2)}" height="${Math.max(4, h - wall * 2)}" rx="${Math.max(2, rx - wall * 0.6)}" fill="#090e1a" stroke="#38bdf8" stroke-width="1.2"/>
+          <text x="130" y="164" fill="#94a3b8" font-size="11" text-anchor="middle">A: ${a}mm × B: ${b}mm × t: ${t}mm</text>
+        `;
+        cap.textContent = '외부 모서리 R=2t 공제 단면 비율 모식도';
+      } else if (currentTab === 'channel' && channelMode === 'c') {
+        const { h, b, cLip, t } = state.channel.c;
+        const scale = Math.min(115 / Math.max(h, 20), 140 / Math.max(b, 20));
+        const H = Math.max(45, h * scale);
+        const B = Math.max(35, b * scale);
+        const L = Math.max(10, Math.min(B * 0.55, cLip * scale));
+        const sw = Math.max(3, Math.min(10, t * scale * 1.6));
+        const x0 = (260 - B) / 2;
+        const y0 = (155 - H) / 2;
+
+        const d = `M ${x0 + B} ${y0 + L} L ${x0 + B} ${y0} L ${x0} ${y0} L ${x0} ${y0 + H} L ${x0 + B} ${y0 + H} L ${x0 + B} ${y0 + H - L}`;
+        svg.innerHTML = `
+          <path d="${d}" fill="none" stroke="#60a5fa" stroke-width="${sw}" stroke-linejoin="round" stroke-linecap="round"/>
+          <text x="130" y="164" fill="#94a3b8" font-size="11" text-anchor="middle">H:${h} · B:${b} · C:${cLip} · t:${t}</text>
+        `;
+        cap.textContent = '경량 C형강 단면 모식도';
+      } else if (currentTab === 'channel' && channelMode === 'u') {
+        const { h, b, t1, t2 } = state.channel.u;
+        const scale = Math.min(115 / Math.max(h, 20), 140 / Math.max(b, 20));
+        const H = Math.max(45, h * scale);
+        const B = Math.max(35, b * scale);
+        const web = Math.max(3, Math.min(12, t1 * scale * 1.5));
+        const flg = Math.max(4, Math.min(14, t2 * scale * 1.5));
+        const x0 = (260 - B) / 2;
+        const y0 = (155 - H) / 2;
+
+        const d = `M ${x0 + B} ${y0} L ${x0} ${y0} L ${x0} ${y0 + H} L ${x0 + B} ${y0 + H} L ${x0 + B} ${y0 + H - flg} L ${x0 + web} ${y0 + H - flg} L ${x0 + web} ${y0 + flg} L ${x0 + B} ${y0 + flg} Z`;
+        svg.innerHTML = `
+          <path d="${d}" fill="rgba(59,130,246,0.25)" stroke="#60a5fa" stroke-width="1.8" stroke-linejoin="round"/>
+          <text x="130" y="164" fill="#94a3b8" font-size="11" text-anchor="middle">H:${h} · B:${b} · t1:${t1} · t2:${t2}</text>
+        `;
+        cap.textContent = '일반 ㄷ형강(채널) 단면 모식도';
+      } else if (currentTab === 'hbeam') {
+        const { h, b, t1, t2 } = state.hbeam;
+        const scale = Math.min(115 / Math.max(h, 30), 150 / Math.max(b, 30));
+        const H = Math.max(50, h * scale);
+        const B = Math.max(45, b * scale);
+        const web = Math.max(3, Math.min(12, t1 * scale * 1.5));
+        const flg = Math.max(4, Math.min(14, t2 * scale * 1.5));
+        const cx = 130;
+        const y0 = (155 - H) / 2;
+
+        svg.innerHTML = `
+          <rect x="${cx - B / 2}" y="${y0}" width="${B}" height="${flg}" fill="rgba(59,130,246,0.28)" stroke="#60a5fa" stroke-width="1.6"/>
+          <rect x="${cx - B / 2}" y="${y0 + H - flg}" width="${B}" height="${flg}" fill="rgba(59,130,246,0.28)" stroke="#60a5fa" stroke-width="1.6"/>
+          <rect x="${cx - web / 2}" y="${y0 + flg}" width="${web}" height="${Math.max(8, H - flg * 2)}" fill="rgba(96,165,250,0.35)" stroke="#60a5fa" stroke-width="1.5"/>
+          <text x="130" y="164" fill="#94a3b8" font-size="11" text-anchor="middle">H:${h} · B:${b} · t1:${t1} · t2:${t2}</text>
+        `;
+        cap.textContent = 'H형강 단면 모식도';
+      } else {
+        const { width, height, t } = state.plate;
+        svg.innerHTML = `
+          <polygon points="65,45 195,30 195,120 65,135" fill="rgba(59,130,246,0.22)" stroke="#60a5fa" stroke-width="2"/>
+          <polygon points="65,135 195,120 195,128 65,143" fill="rgba(16,185,129,0.45)" stroke="#34d399" stroke-width="1.4"/>
+          <text x="130" y="164" fill="#94a3b8" font-size="11" text-anchor="middle">${width}mm × ${height}mm × ${t}T</text>
+        `;
+        cap.textContent = '철판/평철 판재 모식도';
+      }
+    }
+
+    function calculate() {
+      const data = getCurrentCalc();
+      document.getElementById('badgeSpec').textContent = `${data.category} · ${data.spec}`;
+      document.getElementById('totalLabel').textContent = `총 중량 (${data.qty}개 기준)`;
+      document.getElementById('totalWeightKg').textContent = `${fmt(data.totalKg, 2)} kg`;
+      document.getElementById('totalWeightTon').textContent = `${fmt(data.totalKg / 1000, 4)} ton`;
+
+      document.getElementById('metricsGrid').innerHTML = data.metrics
+        .map(m => `<div class="metric-box"><div class="k">${m.k}</div><div class="v">${m.v}</div></div>`)
+        .join('');
+
+      document.getElementById('formulaBox').textContent = data.formula;
+      renderSvg(data);
+    }
+
+    function addToBom() {
+      const data = getCurrentCalc();
+      if (data.totalKg <= 0 || data.qty <= 0) {
+        showToast('치수와 수량을 확인해 주세요.');
+        return;
+      }
+      const price = data.pricePerKg > 0 ? Math.round(data.totalKg * data.pricePerKg) : 0;
+      bomList.push({
+        id: Date.now() + Math.random(),
+        category: data.category,
+        spec: data.spec,
+        unitWeight: data.unitWeight,
+        unitLabel: data.unitLabel,
+        lengthLabel: data.lengthLabel,
+        qty: data.qty,
+        totalKg: data.totalKg,
+        price
+      });
+      renderBom();
+      showToast('물량 산출표에 추가되었습니다.');
+    }
+
+    function removeBomItem(id) {
+      bomList = bomList.filter(item => item.id !== id);
+      renderBom();
+    }
+
+    function clearBom() {
+      bomList = [];
+      renderBom();
+      showToast('산출표 목록을 비웠습니다.');
+    }
+
+    function renderBom() {
+      const tbody = document.getElementById('bomBody');
+      if (bomList.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="8" style="text-align:center;color:var(--muted);padding:20px;">
+              위에서 치수를 입력한 뒤 <strong>[물량 산출표에 추가]</strong>를 누르면 자재가 누적됩니다.
+            </td>
+          </tr>
+        `;
+        document.getElementById('bomTotalQty').textContent = '0';
+        document.getElementById('bomTotalKg').textContent = '0.00 kg';
+        document.getElementById('bomTotalTon').textContent = '0.0000 ton';
+        document.getElementById('bomTotalPrice').textContent = '0 원';
+        return;
+      }
+
+      tbody.innerHTML = bomList
+        .map(item => `
+          <tr>
+            <td>${item.category}</td>
+            <td><strong>${item.spec}</strong></td>
+            <td class="num">${fmt(item.unitWeight, 2)} ${item.unitLabel}</td>
+            <td class="num">${item.lengthLabel}</td>
+            <td class="num">${item.qty}</td>
+            <td class="num"><strong>${fmt(item.totalKg, 2)} kg</strong></td>
+            <td class="num">${item.price > 0 ? `${fmt(item.price, 0)} 원` : '-'}</td>
+            <td class="num"><button type="button" class="btn-danger-sm" onclick="removeBomItem(${item.id})">삭제</button></td>
+          </tr>
+        `)
+        .join('');
+
+      const totalQty = bomList.reduce((acc, i) => acc + i.qty, 0);
+      const totalKg = bomList.reduce((acc, i) => acc + i.totalKg, 0);
+      const totalPrice = bomList.reduce((acc, i) => acc + i.price, 0);
+
+      document.getElementById('bomTotalQty').textContent = fmt(totalQty, 0);
+      document.getElementById('bomTotalKg').textContent = `${fmt(totalKg, 2)} kg`;
+      document.getElementById('bomTotalTon').textContent = `${fmt(totalKg / 1000, 4)} ton`;
+      document.getElementById('bomTotalPrice').textContent = `${fmt(totalPrice, 0)} 원`;
+    }
+
+    function copyBomText() {
+      if (bomList.length === 0) {
+        showToast('복사할 자재 항목이 없습니다.');
+        return;
+      }
+      const lines = ['[철강 자재 물량 산출 내역]'];
+      bomList.forEach((item, idx) => {
+        lines.push(
+          `${idx + 1}. ${item.category} ${item.spec} (${item.lengthLabel}) × ${item.qty} = ${fmt(item.totalKg, 2)} kg` +
+          (item.price > 0 ? ` (${fmt(item.price, 0)}원)` : '')
+        );
+      });
+      const totalKg = bomList.reduce((acc, i) => acc + i.totalKg, 0);
+      const totalPrice = bomList.reduce((acc, i) => acc + i.price, 0);
+      lines.push(`------------------------`);
+      lines.push(`총 중량: ${fmt(totalKg, 2)} kg (${fmt(totalKg / 1000, 4)} ton)`);
+      if (totalPrice > 0) lines.push(`총 금액: ${fmt(totalPrice, 0)} 원`);
+
+      navigator.clipboard?.writeText(lines.join('\n')).then(
+        () => showToast('발주용 텍스트가 복사되었습니다.'),
+        () => showToast('복사에 실패했습니다.')
+      );
+    }
+
+    function exportBomCsv() {
+      if (bomList.length === 0) {
+        showToast('내보낼 자재 항목이 없습니다.');
+        return;
+      }
+      const header = ['구분', '규격', '단위중량', '단위', '길이/치수', '수량', '총중량(kg)', '예상금액(원)'];
+      const rows = bomList.map(i => [
+        i.category,
+        i.spec,
+        i.unitWeight.toFixed(2),
+        i.unitLabel,
+        i.lengthLabel,
+        i.qty,
+        i.totalKg.toFixed(2),
+        i.price
+      ]);
+      const csvContent = '\uFEFF' + [header, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = '철강_물량산출표.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('CSV 파일이 다운로드되었습니다.');
+    }
+
+    // 초기 렌더링
+    renderInputCard();
+    calculate();
+    renderBom();
+  </script>
+</body>
+</html>
